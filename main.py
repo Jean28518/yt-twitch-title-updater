@@ -20,11 +20,11 @@ def main():
     authenticate()
 
     while True:
-        update_video_titles()
+        sync_video_titles()
         time.sleep(60)
 
 
-def update_video_titles():
+def sync_video_titles():
     # for every room in the config, get the current event and update the video title if necessary
     config = get_config()
     for room_assignment in config["room-assignments"]:

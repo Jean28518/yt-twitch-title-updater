@@ -6,6 +6,8 @@ Updates yt and twitch titles according to a timetable
 
 ```bash
 cp config.json.example config.json
+# Edit the config.json file
+vim config.json
 
 sudo apt install python3-venv
 python3 -m venv venv
@@ -20,4 +22,4 @@ python main.py
 
 <https://developers.google.com/youtube/v3/quickstart/python>
 
-- You need to download the client_secret_*.json file and place it next to the config.json file.
+- You need to download the client_secret_*.json file and place it next to the config.json file
