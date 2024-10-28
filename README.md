@@ -15,3 +15,9 @@ pip install -r requirements.txt
 # Run the script
 python main.py
 ```
+
+## Access YT API
+
+<https://developers.google.com/youtube/v3/quickstart/python>
+
+- You need to download the client_secret_*.json file and place it next to the config.json file.

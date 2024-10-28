@@ -1,1 +1,13 @@
-{"name": "Tux-Tage 2024"}
+{
+    "yt-api-key": "", 
+    "ems-event-id": "3", 
+    "ems-url": "https://ems.example.com", 
+    "event-name": "My Event",
+    "room-assignments": [
+        {
+            "ems-room-id": 1,
+            "room-name": "My room",
+            "yt-video-id": ""
+        }
+    ]
+}
