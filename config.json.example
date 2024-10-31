@@ -7,7 +7,10 @@
         {
             "ems-room-id": 1,
             "room-name": "My room",
-            "yt-video-id": ""
+            "yt-video-id": "",
+            "twitch-streamer-name": ""
         }
-    ]
+    ],
+    "twitch-client-id": "",
+    "twitch-client-secret": ""
 }

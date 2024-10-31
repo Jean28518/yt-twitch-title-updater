@@ -12,6 +12,15 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+from twitchAPI.twitch import Twitch
+from twitchAPI.oauth import UserAuthenticator
+from twitchAPI.type import AuthScope
+from twitchAPI.helper import first
+
+
+import asyncio
+
+
 
 SCOPES = ["https://www.googleapis.com/auth/youtube.force-ssl"]
 
@@ -31,15 +40,27 @@ def sync_video_titles():
         room_id = room_assignment["ems-room-id"]
         video_id = room_assignment["yt-video-id"]
         room_name = room_assignment["room-name"]
+        twitch_streamer_name = room_assignment["twitch-streamer-name"]
         lecture = get_current_ems_lecture_for_room(room_id)
         wanted_title = ""
         if lecture:
             wanted_title = f"{config['event-name']}: {lecture['title']} ({room_name})"
         else:
             wanted_title = f"{config['event-name']} ({room_name})"
-        current_title = get_video_snippet_by_id(video_id)["title"]
-        if current_title != wanted_title:
-            update_video_title(video_id, wanted_title)
+
+        if not video_id.strip() == "":
+            current_title = get_video_snippet_by_id(video_id)["title"]
+            if current_title != wanted_title:
+                update_video_title(video_id, wanted_title)
+        
+        if not twitch_streamer_name.strip() == "":
+            streamer_id = asyncio.run(get_twitch_streamer_id(twitch_streamer_name))
+            # We can only update the title if the stream is live because of twitch
+            if asyncio.run(is_twitch_stream_live(streamer_id)):
+                current_title = asyncio.run(get_twitch_stream_title(streamer_id))
+                if current_title != wanted_title:
+                    asyncio.run(update_twitch_stream_title(streamer_id, wanted_title))
+        
 
 
 
@@ -147,5 +168,71 @@ def update_video_title(video_id, new_title):
     response = request.execute()
     # print(response)
 
+async def get_twitch():
+    config = get_config()
+    client_id = config["twitch-client-id"]
+    client_secret = config["twitch-client-secret"]
+
+    # Load the auth token from the file token_twitch.json if it exists
+    if os.path.exists("token_twitch.json"):
+        with open("token_twitch.json", "r") as token_file:
+            old_tokens = json.load(token_file)
+    
+    # Try to authenticate with the Twitch API with the old tokens
+    try:
+        twitch = await Twitch(client_id, client_secret)
+        await twitch.set_user_authentication(old_tokens["token"], [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.USER_EDIT], old_tokens["refresh_token"])
+        return twitch
+    except:
+        pass
+            
+
+    twitch = await Twitch(client_id, client_secret)
+
+    target_scope = [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.USER_EDIT]
+    auth = UserAuthenticator(twitch, target_scope, force_verify=False)
+    # this will open your default browser and prompt you with the twitch verification website
+    token, refresh_token = await auth.authenticate()
+
+    # Save the new tokens to the file token_twitch.json
+    with open("token_twitch.json", "w") as token_file:
+        json.dump({"token": token, "refresh_token": refresh_token}, token_file)
+
+    await twitch.set_app_authentication(token, [AuthScope.CHANNEL_MANAGE_BROADCAST, AuthScope.USER_EDIT])
+
+    return twitch
+
+async def get_twitch_streamer_id(streamer_name):
+    twitch = await get_twitch()
+    twitch_user = await first(twitch.get_users(logins=[streamer_name]))
+    return twitch_user.id
+    
+    
+   
+
+async def get_twitch_stream_title(streamer_id):
+    twitch = await get_twitch()
+    # stream_metadata = await first(twitch.get_streams(user_login=[streamer_name], stream_type="all", first=1))
+    channel_information = (await twitch.get_channel_information(streamer_id))[0]
+    return channel_information.title
+   
+async def is_twitch_stream_live(streamer_id):
+    twitch = await get_twitch()
+    stream = await first(twitch.get_streams(user_id=streamer_id))
+    return stream is not None
+
+async def update_twitch_stream_title(streamer_id, new_title):
+    print(f"Updating Twitch stream title for streamer with ID {streamer_id} to {new_title}")
+    twitch = await get_twitch()
+    await twitch.modify_channel_information(streamer_id, title=new_title)
+
+async def get_twitch_stream_key(streamer_id):
+    twitch = await get_twitch()
+    stream_key = await twitch.get_stream_key(streamer_id)
+    return stream_key
+   
+
+
 if __name__ == "__main__":
     main()
+
