@@ -147,6 +147,9 @@ def get_video_snippet_by_id(video_id):
 
 
 def update_video_title(video_id, new_title):
+    if len(new_title) > 100:
+        new_title = new_title[:97] + "..."
+
     print(f"Updating video title for video with ID {video_id} to {new_title}")
 
     video_snippet = get_video_snippet_by_id(video_id)
@@ -222,6 +225,8 @@ async def is_twitch_stream_live(streamer_id):
     return stream is not None
 
 async def update_twitch_stream_title(streamer_id, new_title):
+    if len(new_title) > 140:
+        new_title = new_title[:137] + "..."
     print(f"Updating Twitch stream title for streamer with ID {streamer_id} to {new_title}")
     twitch = await get_twitch()
     await twitch.modify_channel_information(streamer_id, title=new_title)
