@@ -1,6 +1,6 @@
 # yt-twitch-title-updater
 
-Updates yt and twitch titles according to a timetable from ems
+Updates yt and twitch titles according to a timetable from [ems](https://github.com/Jean28518/event-management-system)
 
 ## Deployment
 
