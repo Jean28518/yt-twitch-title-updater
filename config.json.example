@@ -3,6 +3,7 @@
     "ems-event-id": "3", 
     "ems-url": "https://ems.example.com", 
     "event-name": "My Event",
+    "ics-url": "",
     "room-assignments": [
         {
             "ems-room-id": 1,

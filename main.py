@@ -85,16 +85,40 @@ def get_current_ems_lecture_for_room(room_id: int) -> dict:
         if start_time <= now <= end_time:
             return lecture
 
-    
+# if ics-url is set in the config we only get our information of this .ics url
 def get_ems_timetable(event_id) -> list:
     config = get_config()
-    # Get the event data from the EMS API
-    if config["ems-url"].endswith("/"):
-        config["ems-url"] = config["ems-url"][:-1]
-    ems_url = f"{config['ems-url']}/events/api/{event_id}/"
-    response = requests.get(ems_url)
-    event_data = response.json()
-    return event_data["lectures"]
+    if config["ics-url"]:
+        ## ICS ##
+        ics_string = requests.get(config["ics-url"]).text
+        lectures = []
+        # Now we convert all entries to the lectures list.
+        current_lecture = {}
+        for line in ics_string.splitlines():
+            if line.startswith("BEGIN:VEVENT"):
+                current_lecture = {}
+            if line.startswith("DTSTART:"):
+                current_lecture["scheduled_presentation_time"] = datetime.strptime(line.replace("DTSTART:", ""), "%Y%m%dT%H%M%S%z")
+            if line.startswith("DTEND:"):
+                current_lecture["scheduled_presentation_end"] = datetime.strptime(line.replace("DTEND:", ""), "%Y%m%dT%H%M%S%z")
+                current_lecture["scheduled_duration"] = (current_lecture["scheduled_presentation_end"]-current_lecture["scheduled_presentation_time"]).total_seconds / 60
+            if line.startswith["SUMMARY:"]:
+                current_lecture["title"] = line.replace("SUMMARY:", "")
+            if line.startswith("LOCATION:"):
+                current_lecture["scheduled_in_room_id"] = line.replace("LOCATION:", "")
+            if line.startswith["END:VEVENT"]:
+                lectures.append(current_lecture) 
+        print(lectures)
+        return lectures
+    else:
+        ### EMS ##
+        # Get the event data from the EMS API
+        if config["ems-url"].endswith("/"):
+            config["ems-url"] = config["ems-url"][:-1]
+        ems_url = f"{config['ems-url']}/events/api/{event_id}/"
+        response = requests.get(ems_url)
+        event_data = response.json()
+        return event_data["lectures"]
 
 
 def authenticate():

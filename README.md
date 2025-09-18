@@ -8,6 +8,8 @@ Updates yt and twitch titles according to a timetable from [ems](https://github.
 cp config.json.example config.json
 # Edit the config.json file
 vim config.json
+# If you set the ics-url option, it pulls its information only from this .ics events. (Kielux Mode)
+# The ems-room-id is then the Content after LOCATION: from the .ics
 
 sudo apt install python3-venv
 python3 -m venv venv
